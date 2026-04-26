@@ -136,22 +136,32 @@
   animation: shimmer 3s linear infinite;
 }
 
-/* Video Container */
-.video-container {
-  position: relative;
-  overflow: hidden;
-  border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+/* Smooth Scroll */
+html {
+  scroll-behavior: smooth;
 }
 
-.video-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom, transparent 60%, rgba(20, 184, 166, 0.1) 100%);
-  pointer-events: none;
-  z-index: 1;
+/* Selection */
+::selection {
+  background: rgba(20, 184, 166, 0.3);
+  color: white;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
