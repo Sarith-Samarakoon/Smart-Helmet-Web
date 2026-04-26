@@ -1,4 +1,4 @@
-import { Mail, Award, User, Github, Linkedin, Twitter } from 'lucide-react';
+import { Mail, Award, User } from 'lucide-react';
 
 const About = () => {
   const teamMembers = [
