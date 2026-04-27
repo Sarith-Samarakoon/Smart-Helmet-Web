@@ -1,8 +1,34 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, Calendar, Award } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronDown, ChevronUp, Calendar, Award, Flag } from 'lucide-react';
 
 const Milestones = () => {
   const [openMilestone, setOpenMilestone] = useState(null);
+  const sectionsRef = useRef([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    sectionsRef.current.forEach((section) => {
+      if (section) observer.observe(section);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const addToRefs = (el) => {
+    if (el && !sectionsRef.current.includes(el)) {
+      sectionsRef.current.push(el);
+    }
+  };
 
   const milestones = [
     {
@@ -82,76 +108,77 @@ const Milestones = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12 animate-fade-in-down">
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-teal-500/30 to-cyan-500/30 rounded-full blur-xl" />
-              <img 
-                src="/logo.png" 
-                alt="Smart Helmet Logo" 
-                className="relative w-20 h-20 object-contain animate-float"
-              />
-            </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Smart Helmet <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-400">Milestones</span>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div ref={addToRefs} className="reveal text-center mb-16">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-6">
+            <Flag className="w-4 h-4" />
+            Project Timeline
+          </span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-4">
+            Smart Helmet <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Milestones</span>
           </h1>
-          <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+          <p className="text-xl text-slate-600 max-w-3xl mx-auto">
             Track our research progress through key assessment phases
           </p>
         </div>
 
         <div className="space-y-4">
-          {milestones.map((milestone) => (
+          {milestones.map((milestone, index) => (
             <div
               key={milestone.id}
-              className="group bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl overflow-hidden hover:border-teal-500/30 transition-all duration-300 animate-scale-in"
+              ref={addToRefs}
+              className="reveal group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300"
+              style={{ transitionDelay: `${index * 50}ms` }}
             >
               <button
                 onClick={() => toggleMilestone(milestone.id)}
                 className="w-full px-8 py-6 flex items-center justify-between text-left focus:outline-none"
               >
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-white mb-2">
-                    {milestone.title}
-                  </h2>
-                  <p className="text-slate-400">{milestone.assessment}</p>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                      {milestone.id}
+                    </span>
+                    <h2 className="text-xl font-bold text-slate-900">
+                      {milestone.title}
+                    </h2>
+                  </div>
+                  <p className="text-slate-500 ml-11">{milestone.assessment}</p>
                 </div>
                 <div className="flex items-center space-x-4 ml-4">
-                  <div className="text-right">
-                    <div className="flex items-center text-slate-500 mb-1">
+                  <div className="text-right hidden sm:block">
+                    <div className="flex items-center text-slate-400 mb-1">
                       <Calendar className="w-4 h-4 mr-2" />
                       <span className="text-sm font-medium">{milestone.date}</span>
                     </div>
-                    <div className="flex items-center text-teal-400">
+                    <div className="flex items-center text-blue-600">
                       <Award className="w-4 h-4 mr-2" />
                       <span className="text-sm font-medium">{milestone.marks}</span>
                     </div>
                   </div>
-                  <div className="w-10 h-10 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                     {openMilestone === milestone.id ? (
-                      <ChevronUp className="w-6 h-6 text-slate-400" />
+                      <ChevronUp className="w-6 h-6 text-slate-500" />
                     ) : (
-                      <ChevronDown className="w-6 h-6 text-slate-400" />
+                      <ChevronDown className="w-6 h-6 text-slate-500" />
                     )}
                   </div>
                 </div>
               </button>
 
               {openMilestone === milestone.id && (
-                <div className="px-8 pb-6 border-t border-slate-700/50">
-                  <h3 className="text-lg font-semibold text-white mt-4 mb-3">
+                <div className="px-8 pb-6 border-t border-slate-100">
+                  <h3 className="text-lg font-semibold text-slate-900 mt-4 mb-3">
                     Assessment Details
                   </h3>
                   <ul className="space-y-2">
-                    {milestone.details.map((detail, index) => (
+                    {milestone.details.map((detail, idx) => (
                       <li
-                        key={index}
-                        className="flex items-start text-slate-400"
+                        key={idx}
+                        className="flex items-start text-slate-600"
                       >
-                        <span className="w-2 h-2 bg-teal-500 rounded-full mt-2 mr-3 flex-shrink-0" />
+                        <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0" />
                         {detail}
                       </li>
                     ))}
@@ -162,35 +189,27 @@ const Milestones = () => {
           ))}
         </div>
 
-        <div className="mt-12 relative overflow-hidden rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-600 p-8 text-white animate-fade-in-up">
+        <div ref={addToRefs} className="reveal mt-12 relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-500 p-10 text-white shadow-xl shadow-blue-500/20">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
           <div className="relative">
             <h3 className="text-2xl font-bold mb-4">Smart Helmet Assessment Overview</h3>
-            <p className="text-teal-100 leading-relaxed mb-4">
+            <p className="text-blue-100 leading-relaxed mb-6">
               The Smart Helmet project is evaluated through a structured milestone system with a total of 100 marks distributed across five key phases. 
               Each milestone represents a critical stage in developing our AI-powered safety system, ensuring continuous progress and quality control.
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-              <div className="bg-white/10 rounded-xl p-4 text-center hover:bg-white/20 transition-all duration-300">
-                <div className="text-2xl font-bold">10</div>
-                <div className="text-sm text-teal-100">Proposal</div>
-              </div>
-              <div className="bg-white/10 rounded-xl p-4 text-center hover:bg-white/20 transition-all duration-300">
-                <div className="text-2xl font-bold">15</div>
-                <div className="text-sm text-teal-100">Progress 1</div>
-              </div>
-              <div className="bg-white/10 rounded-xl p-4 text-center hover:bg-white/20 transition-all duration-300">
-                <div className="text-2xl font-bold">20</div>
-                <div className="text-sm text-teal-100">Progress 2</div>
-              </div>
-              <div className="bg-white/10 rounded-xl p-4 text-center hover:bg-white/20 transition-all duration-300">
-                <div className="text-2xl font-bold">40</div>
-                <div className="text-sm text-teal-100">Final</div>
-              </div>
-              <div className="bg-white/10 rounded-xl p-4 text-center hover:bg-white/20 transition-all duration-300">
-                <div className="text-2xl font-bold">15</div>
-                <div className="text-sm text-teal-100">Viva</div>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {[
+                { marks: '10', label: 'Proposal', color: 'from-blue-400 to-blue-500' },
+                { marks: '15', label: 'Progress 1', color: 'from-cyan-400 to-blue-400' },
+                { marks: '20', label: 'Progress 2', color: 'from-blue-500 to-cyan-400' },
+                { marks: '40', label: 'Final', color: 'from-cyan-500 to-blue-500' },
+                { marks: '15', label: 'Viva', color: 'from-blue-400 to-cyan-500' },
+              ].map((item, idx) => (
+                <div key={idx} className={`bg-gradient-to-br ${item.color} rounded-xl p-4 text-center shadow-lg`}>
+                  <div className="text-2xl font-bold">{item.marks}</div>
+                  <div className="text-sm text-blue-100">{item.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
