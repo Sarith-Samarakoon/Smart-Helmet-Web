@@ -1,8 +1,27 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* Outfit Font Family */
+/* Design System Colors */
+:root {
+  --navy-900: #001A33;
+  --navy-800: #002A4D;
+  --navy-700: #003A66;
+  --electric-blue: #0055FF;
+  --electric-blue-hover: #0044CC;
+  --lavender: #E8E4F3;
+  --mint: #E0F2E9;
+  --pale-rose: #F8E4E4;
+  --pale-yellow: #FDF4E0;
+  --pale-blue: #E4F0F8;
+}
+
+/* Font Family */
 * {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 /* Custom Animations */
@@ -230,7 +249,7 @@
 
 /* Gradient Text Animation */
 .gradient-text-animated {
-  background: linear-gradient(90deg, #3b82f6, #06b6d4, #3b82f6);
+  background: linear-gradient(90deg, var(--electric-blue), #00AAFF, var(--electric-blue));
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -238,35 +257,88 @@
   animation: shimmer 3s linear infinite;
 }
 
+/* Card hover lift effect */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 26, 51, 0.08);
+}
+
+/* Status pills */
+.status-pill {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.status-completed {
+  @apply bg-green-100 text-green-700;
+}
+
+.status-upcoming {
+  @apply bg-amber-100 text-amber-700;
+}
+
+.status-pending {
+  @apply bg-slate-100 text-slate-600;
+}
+
+/* Pastel card accents */
+.card-lavender {
+  border-top: 3px solid #A78BFA;
+}
+
+.card-mint {
+  border-top: 3px solid #34D399;
+}
+
+.card-rose {
+  border-top: 3px solid #F87171;
+}
+
+.card-blue {
+  border-top: 3px solid var(--electric-blue);
+}
+
+/* Circular progress */
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.35s;
+  transform-origin: 50% 50%;
+}
+
 /* Smooth Scroll */
 html {
   scroll-behavior: smooth;
 }
 
-/* Selection - Dark theme */
+/* Selection - Light theme */
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
-  color: #60a5fa;
+  background: rgba(0, 85, 255, 0.15);
+  color: var(--electric-blue);
 }
 
-/* Custom Scrollbar - Dark theme */
+/* Custom Scrollbar - Light theme */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 5px;
-  border: 2px solid #0f172a;
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #94a3b8;
 }
 
 /* New Animations */

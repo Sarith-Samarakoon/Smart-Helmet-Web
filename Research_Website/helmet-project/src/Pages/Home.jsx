@@ -1,46 +1,85 @@
 import { useEffect, useRef, useState } from 'react';
 import { 
-  Search, AlertTriangle, BookOpen, Target, Workflow, Cpu, 
-  ChevronRight, Award, Calendar, FileText, Download, CheckCircle, Clock, 
-  Presentation, FolderOpen, Users, Mail, Phone, MapPin, Send, MessageSquare,
-  Sparkles, ArrowDown, Brain, Shield, Wifi, Smartphone, Activity, Zap, Globe, Flag
+  BookOpen, Target, FileText, Download, CheckCircle, Clock, 
+  Presentation, Users, Mail, Phone, MapPin, Send, MessageSquare,
+  Brain, Shield, Wifi, Activity, Zap, Globe, ChevronRight, 
+  FileSpreadsheet, GraduationCap, Award, Calendar,
+  ArrowRight, ExternalLink, Cpu, Trophy, X
 } from 'lucide-react';
 
 const Home = () => {
-  const sectionsRef = useRef([]);
-  const [openMilestone, setOpenMilestone] = useState(null);
+  const [activeSection, setActiveSection] = useState('home');
+  const [activeScopeSection, setActiveScopeSection] = useState('literature');
+  const [progress, setProgress] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+  const [expandedMilestones, setExpandedMilestones] = useState({ 1: true }); // First one expanded by default
+  const [feedbackIndex, setFeedbackIndex] = useState(0); // Feedback slideshow index
+  const [imageViewer, setImageViewer] = useState({ open: false, image: null, title: '' }); // Image viewer state
+
+  // Section definitions for progress tracking
+  const sections = [
+    { id: 'home', label: 'Home' },
+    { id: 'scope', label: 'Project Scope' },
+    { id: 'milestones', label: 'Milestones' },
+    { id: 'downloads', label: 'Downloads' },
+    { id: 'team', label: 'Team' },
+    { id: 'contact', label: 'Contact' }
+  ];
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollTop = window.scrollY;
+      const scrollProgress = (scrollTop / scrollHeight) * 100;
+      setProgress(scrollProgress);
+
+      // Update active section
+      for (const section of sections) {
+        const element = document.getElementById(section.id);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 200 && rect.bottom >= 200) {
+            setActiveSection(section.id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
+    // Intersection Observer for scope sections
+    const scopeObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('active');
+            const sectionId = entry.target.id.replace('scope-', '');
+            setActiveScopeSection(sectionId);
           }
         });
       },
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0.3, rootMargin: '-100px 0px -50% 0px' }
     );
-
-    sectionsRef.current.forEach((section) => {
-      if (section) observer.observe(section);
-    });
-
-    return () => observer.disconnect();
+    
+    const scopeElements = ['literature', 'gap', 'problem', 'objectives', 'methodology', 'technologies'].map(
+      id => document.getElementById(`scope-${id}`)
+    ).filter(Boolean);
+    
+    scopeElements.forEach(el => scopeObserver.observe(el));
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      scopeObserver.disconnect();
+    };
   }, []);
-
-  const addToRefs = (el) => {
-    if (el && !sectionsRef.current.includes(el)) {
-      sectionsRef.current.push(el);
-    }
-  };
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+    setMobileMenuOpen(false);
   };
 
   const handleSubmit = (e) => {
@@ -49,18 +88,56 @@ const Home = () => {
     setFormData({ name: '', email: '', subject: '', message: '' });
   };
 
-  const toggleMilestone = (id) => {
-    setOpenMilestone(openMilestone === id ? null : id);
-  };
-
-  // Domain Data
-  const domainSections = [
-    { icon: Search, title: 'Literature Survey', color: 'blue', content: 'A comprehensive review of existing wearable safety devices, EEG-based stress detection systems, and IoT-enabled emergency response solutions.' },
-    { icon: AlertTriangle, title: 'Research Gap', color: 'orange', content: 'Existing helmets provide passive protection but lack real-time physiological monitoring and proactive accident prevention.' },
-    { icon: BookOpen, title: 'Research Problem', color: 'purple', content: 'How can we design an intelligent helmet system that continuously monitors rider state, detects stress and fatigue, and prevents accidents?' },
-    { icon: Target, title: 'Research Objectives', color: 'emerald', content: '1) 95%+ accuracy in detection. 2) <10 second alert response. 3) Mobile app development. 4) Field testing validation.' },
-    { icon: Workflow, title: 'Methodology', color: 'cyan', content: 'Our methodology combines hardware prototyping with AI model development using EEG sensors, OpenCV, and machine learning algorithms.' },
-    { icon: Cpu, title: 'Technologies', color: 'indigo', content: 'Python, TensorFlow, OpenCV, Arduino/Raspberry Pi, React Native, EEG sensors, GSM/GPS modules, Firebase.' },
+  // Project Scope Data - Bento Grid
+  const scopeSections = [
+    { 
+      id: 'literature',
+      icon: BookOpen, 
+      title: 'Literature Survey', 
+      accent: 'lavender',
+      content: 'A comprehensive review of existing wearable safety devices, EEG-based stress detection systems, and IoT-enabled emergency response solutions. We analyzed 50+ research papers to identify best practices and gaps in current technology.',
+      points: ['Wearable Safety Analysis', 'EEG Detection Systems', 'IoT Emergency Response']
+    },
+    { 
+      id: 'gap',
+      icon: Target, 
+      title: 'Research Gap', 
+      accent: 'mint',
+      content: 'Existing helmets provide passive protection but lack real-time physiological monitoring and proactive accident prevention. Current solutions fail to integrate AI-driven predictive analytics for rider safety.',
+      points: ['No Real-time Monitoring', 'Passive Protection Only', 'Missing AI Integration']
+    },
+    { 
+      id: 'problem',
+      icon: Brain, 
+      title: 'Research Problem', 
+      accent: 'rose',
+      content: 'How can we design an intelligent helmet system that continuously monitors rider state, detects stress and fatigue, and prevents accidents through predictive alerts and emergency response?',
+      points: ['Continuous Monitoring', 'Stress Detection', 'Accident Prevention']
+    },
+    { 
+      id: 'objectives',
+      icon: Activity, 
+      title: 'Research Objectives', 
+      accent: 'blue',
+      content: 'Achieve 95%+ accuracy in drowsiness detection, ensure sub-10 second alert response time, develop cross-platform mobile application, and validate through extensive field testing.',
+      points: ['95%+ Detection Accuracy', '<10s Alert Response', 'Mobile App Development']
+    },
+    { 
+      id: 'methodology',
+      icon: Zap, 
+      title: 'Methodology', 
+      accent: 'lavender',
+      content: 'Our methodology combines hardware prototyping with AI model development using EEG sensors, OpenCV for computer vision, and machine learning algorithms for pattern recognition.',
+      points: ['Hardware Prototyping', 'AI Model Development', 'Computer Vision Integration']
+    },
+    { 
+      id: 'technologies',
+      icon: Shield, 
+      title: 'Technologies', 
+      accent: 'mint',
+      content: 'Built with Python, TensorFlow, OpenCV, Arduino/Raspberry Pi, React Native for mobile, EEG sensors, GSM/GPS modules, and Firebase for real-time data synchronization.',
+      points: ['Python & TensorFlow', 'React Native', 'IoT Sensors & GPS']
+    },
   ];
 
   // Milestones Data
@@ -72,551 +149,1185 @@ const Home = () => {
     { id: 5, title: 'Viva', assessment: 'Oral defense', date: 'TBA', marks: '15 marks', details: ['Oral presentation', 'Q&A session', 'Demonstration', 'Defense of results', 'Contribution assessment'] },
   ];
 
-  // Documents Data
+  // Documents Data - Updated
   const documents = [
-    { title: 'Project Charter', desc: 'Initial project charter', file: 'project-charter.pdf', color: 'blue' },
-    { title: 'TAF Document', desc: 'Team Allocation Form', file: 'taf-document.pdf', color: 'cyan' },
-    { title: 'Proposal Report', desc: 'Comprehensive proposal', file: 'proposal-report.pdf', color: 'blue' },
-    { title: 'Research Document', desc: 'Research documentation', file: 'research-document.pdf', color: 'cyan' },
-    { title: 'Smart Helmet Thesis', desc: 'Complete thesis', file: 'smart-helmet-thesis.pdf', color: 'blue' },
-    { title: 'Justification Sheet', desc: 'Progress assessment', file: 'justification-sheet.pdf', color: 'cyan' },
+    { 
+      title: 'Topic Assessment Form', 
+      desc: 'Initial project assessment and team allocation documentation', 
+      file: 'taf-document.pdf', 
+      type: 'PDF',
+      size: '2mb',
+      status: 'Available',
+      accent: 'lavender'
+    },
+    { 
+      title: 'Research Paper', 
+      desc: 'Real-Time Safety Monitoring System for Public Transport: An AI-Driven Approach', 
+      file: 'research-paper.pdf', 
+      type: 'PDF',
+      size: '2mb',
+      status: 'Available',
+      accent: 'mint'
+    },
+    { 
+      title: 'Project Charter', 
+      desc: 'Comprehensive project proposal with methodology and timeline', 
+      file: 'project-charter.pdf', 
+      type: 'PDF',
+      size: '3mb',
+      status: 'Available',
+      accent: 'blue'
+    },
+    { 
+      title: 'Technical Documentation', 
+      desc: 'System architecture, API documentation, and technical specifications', 
+      file: 'tech-docs.pdf', 
+      type: 'PDF',
+      size: '4mb',
+      status: 'Available',
+      accent: 'rose'
+    },
   ];
 
-  // Team Data - 6 members
+  // Presentations Data
+  const presentations = [
+     {
+      title: 'Proposal Presentation',
+      description: 'Initial research pitch covering the problem domain, proposed solution, preliminary literature review, and project plan.',
+      date: 'September 2025',
+      status: 'Available',
+      filename: 'Proposal-Presentation1.pptx',
+      icon: Presentation,
+      color: 'blue',
+      type: '.pptx',
+      image: '/presentation1.jpeg',
+      tags: ['Problem Statement', 'Methodology', 'Project Plan'],
+      slides: 28
+    },
+    {
+      title: 'Progress Presentation 1',
+      description: 'First progress review showcasing stress detection implementation and EEG sensor integration with preliminary results.',
+      date: 'December 2025',
+      status: 'Available',
+      filename: '25-26J-294-PP1.pdf',
+      icon: FileText,
+      color: 'cyan',
+      type: '.pdf',
+      image: '/presentation1.jpeg',
+      tags: ['Stress Detection', 'EEG Sensors', 'Progress Update'],
+      slides: 24
+    },
+    {
+      title: 'Progress Presentation 2',
+      description: 'Second progress review demonstrating drowsiness detection, accident alerting system and IoT integration.',
+      date: 'March 2026',
+      status: 'Available',
+      filename: '25-26J 294 - PP2.pptx',
+      icon: Presentation,
+      color: 'blue',
+      type: '.pptx',
+      image: '/presentation1.jpeg',
+      tags: ['Drowsiness Detection', 'Alert System', 'IoT Integration'],
+      slides: 32
+    },
+    {
+      title: 'Final Presentation',
+      description: 'Comprehensive final presentation covering complete Smart Helmet system, results, and safety impact analysis.',
+      date: 'June 2026',
+      status: 'In Progress',
+      filename: null,
+      icon: Presentation,
+      color: 'cyan',
+      type: '.pptx',
+      image: '/presentation1.jpeg',
+      tags: ['Final Results', 'Safety Impact', 'Future Work'],
+      slides: 40
+    }
+  ];
+
+  // Team Data - with proper structure for new UI
+  const supervisors = [
+    {
+      name: 'Mr. Jagath Wrickramarathne',
+      role: 'Supervisor',
+      title: 'SUPERVISOR',
+      institution: 'Sri Lanka Institute of Information Technology',
+      department: 'Information Technology',
+      linkedin: '#',
+      accent: 'blue',
+      image: '/jagath.jpeg'
+    },
+    {
+      name: 'Mr. Amila Nuwan Alexander',
+      role: 'Co-Supervisor',
+      title: 'CO-SUPERVISOR',
+      institution: 'Sri Lanka Institute of Information Technology',
+      department: 'Information Technology',
+      linkedin: '#',
+      accent: 'purple',
+      image: '/amila.jpeg'
+    },
+    {
+      name: 'Dr. Sajith Perera',
+      role: 'External Supervisor',
+      title: 'EXTERNAL SUPERVISOR',
+      institution: 'Disrict General Hospital Emblipitiya',
+      department: 'Medical officer Accident & Emergency',
+      linkedin: 'linkedin.com/in/sajith-mayantha-17716a297',
+      accent: 'teal',
+      image: '/sajith.jpeg'
+    },
+  ];
+
   const teamMembers = [
-    { name: 'Dr. Alex Chen', role: 'Principal Investigator', email: 'a.chen@university.edu', image: 'AC', achievements: ['IEEE Fellow', 'PhD MIT', 'Best Researcher Award 2023'] },
-    { name: 'Sarah Williams', role: 'Lead AI Engineer', email: 's.williams@university.edu', image: 'SW', achievements: ['MS Stanford', '2 Patents', 'Top 10 AI Researcher'] },
-    { name: 'Michael Zhang', role: 'Hardware Lead', email: 'm.zhang@university.edu', image: 'MZ', achievements: ['MS Robotics CMU', 'IoT Expert', 'Published 5 Papers'] },
-    { name: 'Emily Rodriguez', role: 'Data Scientist', email: 'e.rodriguez@university.edu', image: 'ER', achievements: ['MS Data Science', 'Kaggle Master', 'Grant Winner'] },
-    { name: 'James Park', role: 'IoT Developer', email: 'j.park@university.edu', image: 'JP', achievements: ['MS Berkeley', 'Full Stack Dev', 'Innovation Award'] },
-    { name: 'Lisa Kumar', role: 'UI/UX Designer', email: 'l.kumar@university.edu', image: 'LK', achievements: ['BFA Design', 'UX Researcher', 'Design Lead'] },
+    {
+      name: 'Vithanage K.W.Y.L.N.',
+      role: 'Researcher',
+      title: 'RESEARCHER',
+      institution: 'Sri Lanka Institute of Information Technology',
+      type: 'Undergraduate',
+      linkedin: 'www.linkedin.com/in/yasiru-nuwan-a6193a2b8',
+      accent: 'blue',
+      image: '/yasiru.jpeg'
+    },
+    {
+      name: 'Samarakoon S.S.A.D.S.B',
+      role: 'Researcher',
+      title: 'RESEARCHER',
+      institution: 'Sri Lanka Institute of Information Technology',
+      type: 'Undergraduate',
+      linkedin: '#',
+      accent: 'purple',
+      image: '/sarith.jpeg'
+    },
+    {
+      name: 'Samarasinghe K.P.C.',
+      role: 'Researcher',
+      title: 'RESEARCHER',
+      institution: 'Sri Lanka Institute of Information Technology',
+      type: 'Undergraduate',
+      linkedin: '#',
+      accent: 'teal',
+      image: '/pradeep.jpeg'
+    },
+    {
+      name: 'Primasha W.G.R.',
+      role: 'Researcher',
+      title: 'RESEARCHER',
+      institution: 'Sri Lanka Institute of Information Technology',
+      type: 'Undergraduate',
+      linkedin: '#',
+      accent: 'orange',
+      image: '/ravindi.jpeg'
+    },
   ];
 
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600 border-blue-200 from-blue-500 to-blue-600',
-    cyan: 'bg-cyan-100 text-cyan-600 border-cyan-200 from-cyan-500 to-blue-500',
-    orange: 'bg-orange-100 text-orange-600 border-orange-200',
-    purple: 'bg-purple-100 text-purple-600 border-purple-200',
-    emerald: 'bg-emerald-100 text-emerald-600 border-emerald-200',
-    indigo: 'bg-indigo-100 text-indigo-600 border-indigo-200',
+  // Accent color mapping
+  const accentColors = {
+    lavender: { bg: 'bg-[#E8E4F3]', border: 'border-[#A78BFA]', icon: 'text-[#7C3AED]' },
+    mint: { bg: 'bg-[#E0F2E9]', border: 'border-[#34D399]', icon: 'text-[#059669]' },
+    rose: { bg: 'bg-[#F8E4E4]', border: 'border-[#F87171]', icon: 'text-[#DC2626]' },
+    blue: { bg: 'bg-[#E4F0F8]', border: 'border-[#0055FF]', icon: 'text-[#0055FF]' },
+    purple: { bg: 'bg-[#EDE9FE]', border: 'border-[#8B5CF6]', icon: 'text-[#7C3AED]' },
+    teal: { bg: 'bg-[#CCFBF1]', border: 'border-[#14B8A6]', icon: 'text-[#0D9488]' },
+    orange: { bg: 'bg-[#FEF3C7]', border: 'border-[#F59E0B]', icon: 'text-[#D97706]' },
   };
 
   return (
-    <div className="bg-white">
-      {/* ========== HERO SECTION - Light Professional IT Services Theme ========== */}
-      <section id="home" className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-white relative overflow-hidden flex items-center">
-        <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: 'radial-gradient(circle at 1px 1px, #3b82f6 1px, transparent 0)', backgroundSize: '40px 40px'}} />
+    <div className="min-h-screen bg-white">
+      {/* Progress Indicator - Fixed Left Side */}
+      <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 hidden xl:block">
+        <div className="flex flex-col items-center gap-2">
+          {sections.map((section, index) => (
+            <button
+              key={section.id}
+              onClick={() => scrollToSection(section.id)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                activeSection === section.id 
+                  ? 'bg-[#0055FF] h-8' 
+                  : 'bg-slate-300 hover:bg-slate-400'
+              }`}
+              title={section.label}
+            />
+          ))}
+        </div>
+      </div>
+
+      
+
+      {/* ========== HERO SECTION ========== */}
+      <section id="home" className="min-h-screen relative overflow-hidden flex items-center pt-16">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="/hero-bg1.jpeg" 
+            alt="Smart Helmet Technology" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/50 to-white/0" />
+        </div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 pt-32 relative w-full">
+        <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 py-20 relative w-full">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div ref={addToRefs} className="reveal">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-6">
-                <Sparkles className="w-4 h-4" />
-                <span>AI-Powered Safety Research</span>
+            {/* Left Content */}
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0055FF]/10 text-[#0055FF] text-xs font-semibold mb-4">
+                <span className="w-1.5 h-1.5 bg-[#0055FF] rounded-full animate-pulse" />
+                Research Project 2026
               </div>
               
-              <h1 className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight mb-6">
+              <h1 className="text-4xl md:text-6xl lg:text-[110px] font-extrabold tracking-tighter text-[#001A33] leading-[1.0] mb-12 whitespace-nowrap ">
                 Smart Helmet
-                <span className="block text-blue-600">Research Project</span>
+                <span className="block text-[#0055FF]">
+                  Safety System
+                </span>
               </h1>
               
-              <p className="text-lg text-slate-600 mb-8 leading-relaxed max-w-xl">
-                Pioneering the future of rider safety through AI-powered helmet technology with real-time stress detection, drowsiness monitoring, and automatic accident alerting.
+              <p className="text-base text-[#001A33]/80 mb-12 leading-relaxed max-w-xl">
+                AI-powered safety monitoring system for riders. Real-time stress detection, 
+                drowsiness alerts, and automatic emergency response.
               </p>
               
-              <div className="flex flex-wrap gap-4 mb-10">
-                <button onClick={() => scrollToSection('about')} className="inline-flex items-center px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg shadow-blue-500/25">
-                  Explore Research <ChevronRight className="w-5 h-5 ml-2" />
+              <div className="flex flex-wrap gap-3">
+                <button 
+                  onClick={() => scrollToSection('scope')} 
+                  className="inline-flex items-center px-6 py-3 bg-[#0055FF] text-white text-sm font-semibold rounded-lg hover:bg-[#0044CC] transition-all duration-200 shadow-lg shadow-[#0055FF]/25"
+                >
+                  Explore Project
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </button>
-                <button onClick={() => scrollToSection('documents')} className="inline-flex items-center px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:border-blue-300 hover:text-blue-600 transition-all duration-300">
-                  <Download className="w-5 h-5 mr-2" /> Documents
+                <button 
+                  onClick={() => scrollToSection('downloads')} 
+                  className="inline-flex items-center px-6 py-3 bg-white text-[#001A33] text-sm font-semibold rounded-lg border border-slate-200 hover:border-[#0055FF] hover:text-[#0055FF] transition-all duration-200"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Documents
                 </button>
-              </div>
-              
-              <div className="flex items-center gap-6 pt-4 border-t border-slate-200">
-                <div className="flex -space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-cyan-100 border-2 border-white flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-cyan-600" />
-                  </div>
-                  <div className="w-10 h-10 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center">
-                    <Wifi className="w-5 h-5 text-indigo-600" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Trusted Technology Stack</p>
-                  <p className="text-sm font-medium text-slate-900">AI • IoT • Cloud</p>
-                </div>
               </div>
             </div>
             
-            {/* Right - Professional Hero Image */}
-            <div ref={addToRefs} className="reveal relative">
-              {/* Main Image Container */}
-              <div className="relative">
-                {/* Background Glow */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-indigo-500/20 rounded-[2rem] blur-2xl animate-pulse" />
+            {/* Right - Empty for background visibility */}
+            <div className="hidden lg:block" />
+          </div>
+        </div>
+      </section>
+
+      {/* ========== PROJECT SCOPE SECTION ========== */}
+      <section id="scope" className="py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-12 gap-12">
+            {/* Left Sidebar */}
+            <div className="lg:col-span-3">
+              <div className="sticky top-24">
+                <div className="text-xs font-bold text-[#6366F1] uppercase tracking-wider mb-2">
+                  Research Focus
+                </div>
+                <h2 className="text-3xl font-bold text-[#1a1a2e] mb-4">
+                  Project Scope
+                </h2>
+                <p className="text-sm text-[#1a1a2e]/60 mb-8 leading-relaxed">
+                  AI-driven multimodal smart helmet system for proactive rider safety and accident prevention.
+                </p>
                 
-                {/* Main Image Card */}
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-blue-500/10 border border-slate-100 bg-white">
-                  {/* Abstract Tech Illustration */}
-                  <div className="aspect-[4/3] relative bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-                    {/* Animated Grid Background */}
-                    <div className="absolute inset-0 opacity-20">
-                      <svg className="w-full h-full" viewBox="0 0 400 300" fill="none">
-                        <defs>
-                          <pattern id="heroGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
-                          </pattern>
-                        </defs>
-                        <rect width="400" height="300" fill="url(#heroGrid)" />
-                      </svg>
-                    </div>
-
-                    {/* Animated Circles */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <div className="w-64 h-64 border border-blue-400/30 rounded-full animate-[spin_10s_linear_infinite]" />
-                      <div className="absolute inset-4 border border-cyan-400/20 rounded-full animate-[spin_15s_linear_infinite_reverse]" />
-                      <div className="absolute inset-8 border border-indigo-400/20 rounded-full animate-[spin_20s_linear_infinite]" />
-                    </div>
-
-                    {/* Central Helmet Icon */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="relative">
-                        <div className="w-40 h-40 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/30 animate-bounce" style={{ animationDuration: '3s' }}>
-                          <svg className="w-20 h-20 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        {/* Glow effect */}
-                        <div className="absolute -inset-4 bg-blue-500/30 rounded-3xl blur-xl animate-pulse" />
-                      </div>
-                    </div>
-
-                    {/* Floating Stats Cards */}
-                    <div className="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-xl p-3 shadow-lg animate-[float_3s_ease-in-out_infinite]">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Activity className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500 font-medium">Accuracy</p>
-                          <p className="text-sm font-bold text-slate-900">99.8%</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="absolute top-4 right-4 bg-white/95 backdrop-blur rounded-xl p-3 shadow-lg animate-[float_4s_ease-in-out_infinite]">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Brain className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500 font-medium">AI Status</p>
-                          <p className="text-sm font-bold text-slate-900">Active</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur rounded-xl p-3 shadow-lg animate-[float_3.5s_ease-in-out_infinite]">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center">
-                          <Wifi className="w-4 h-4 text-cyan-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500 font-medium">Connection</p>
-                          <p className="text-sm font-bold text-slate-900">Live</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur rounded-xl p-3 shadow-lg animate-[float_4.5s_ease-in-out_infinite]">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                          <Shield className="w-4 h-4 text-indigo-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500 font-medium">Protection</p>
-                          <p className="text-sm font-bold text-slate-900">On</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Stats Row */}
-                <div className="mt-6 grid grid-cols-3 gap-3">
+                {/* Sidebar Navigation */}
+                <div className="space-y-1">
                   {[
-                    { label: 'Team Members', value: '6', icon: Users, color: 'blue' },
-                    { label: 'Research Papers', value: '12', icon: BookOpen, color: 'cyan' },
-                    { label: 'Patents Pending', value: '3', icon: Award, color: 'indigo' }
-                  ].map((stat, i) => (
-                    <div key={i} className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm text-center hover:shadow-md hover:border-blue-200 transition-all duration-300 group">
-                      <div className={`w-10 h-8 mx-auto mb-2 bg-${stat.color}-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                        <stat.icon className={`w-4 h-4 text-${stat.color}-600`} />
-                      </div>
-                      <p className="text-lg font-bold text-slate-900">{stat.value}+</p>
-                      <p className="text-xs text-slate-500">{stat.label}</p>
-                    </div>
-                  ))}
+                    { id: 'literature', num: '01', title: 'Literature Survey', color: 'blue' },
+                    { id: 'gap', num: '02', title: 'Research Gap', color: 'violet' },
+                    { id: 'problem', num: '03', title: 'Research Problem & Solution', color: 'rose' },
+                    { id: 'objectives', num: '04', title: 'Research Objectives', color: 'emerald' },
+                    { id: 'methodology', num: '05', title: 'Methodology', color: 'indigo' },
+                    { id: 'technologies', num: '06', title: 'Technologies', color: 'violet' },
+                  ].map((item) => {
+                    const isActive = activeScopeSection === item.id;
+                    const colorClasses = {
+                      blue: { active: 'bg-blue-50 text-blue-600', badge: 'bg-blue-600', border: 'border-blue-600' },
+                      violet: { active: 'bg-violet-50 text-violet-600', badge: 'bg-violet-600', border: 'border-violet-600' },
+                      rose: { active: 'bg-rose-50 text-rose-500', badge: 'bg-rose-500', border: 'border-rose-500' },
+                      emerald: { active: 'bg-emerald-50 text-emerald-600', badge: 'bg-emerald-600', border: 'border-emerald-600' },
+                      indigo: { active: 'bg-indigo-50 text-indigo-600', badge: 'bg-indigo-600', border: 'border-indigo-600' },
+                    };
+                    const colors = colorClasses[item.color];
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveScopeSection(item.id);
+                          const element = document.getElementById(`scope-${item.id}`);
+                          element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                          isActive 
+                            ? colors.active
+                            : 'text-[#1a1a2e]/50 hover:bg-slate-50 hover:text-[#1a1a2e]/70'
+                        }`}
+                      >
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                          isActive ? `${colors.badge} text-white` : 'bg-slate-100 text-[#1a1a2e]/40'
+                        }`}>
+                          {item.num}
+                        </span>
+                        <span className="text-left">{item.title}</span>
+                        {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <button onClick={() => scrollToSection('stats')} className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer group">
-          <span className="text-sm font-medium">Scroll to explore</span>
-          <div className="w-10 h-10 border-2 border-current rounded-full flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-            <ArrowDown className="w-5 h-5 animate-bounce" />
-          </div>
-        </button>
-      </section>
-
-      {/* ========== STATS SECTION - Light ========== */}
-      <section id="stats" className="py-20 bg-blue-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/50 via-transparent to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div ref={addToRefs} className="reveal grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[{ icon: Users, value: '6', label: 'Team Members' }, { icon: BookOpen, value: '12', label: 'Publications' }, { icon: Award, value: '3', label: 'Awards Won' }, { icon: Globe, value: '2', label: 'Patents Pending' }].map((stat, i) => (
-              <div key={i} className="text-center text-white">
-                <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <stat.icon className="w-8 h-8" />
-                </div>
-                <p className="text-4xl font-bold mb-2">{stat.value}+</p>
-                <p className="text-blue-100">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== ABOUT SECTION - With 3D Helmet ========== */}
-      <section id="about" className="py-24 bg-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left - Professional Tech Image */}
-            <div ref={addToRefs} className="reveal order-2 lg:order-1">
-              <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-1 shadow-2xl shadow-blue-500/20">
-                <div className="absolute -inset-4 bg-blue-500/20 rounded-full blur-3xl" />
-                <div className="relative bg-white rounded-[22px] overflow-hidden">
-                  <div className="aspect-square bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative flex items-center justify-center">
-                    {/* Tech Pattern Background */}
-                    <div className="absolute inset-0 opacity-30">
-                      <svg className="w-full h-full" viewBox="0 0 400 400" fill="none">
-                        <defs>
-                          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-                          </pattern>
-                        </defs>
-                        <rect width="400" height="400" fill="url(#grid)" />
-                        <circle cx="200" cy="200" r="150" stroke="rgba(59,130,246,0.3)" strokeWidth="2" fill="none" />
-                        <circle cx="200" cy="200" r="100" stroke="rgba(6,182,212,0.3)" strokeWidth="2" fill="none" />
-                      </svg>
-                    </div>
-                    
-                    {/* Central Icon */}
-                    <div className="relative z-10 text-center">
-                      <div className="w-32 h-32 mx-auto mb-6 bg-white/10 backdrop-blur rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl">
-                        <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-2xl font-bold text-white mb-2">Smart Helmet</h3>
-                      <p className="text-blue-200 text-sm">AI-Powered Safety System</p>
-                    </div>
-
-                    {/* Floating Elements */}
-                    <div className="absolute top-6 left-6 bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-xs text-white/60">AI Status</p>
-                          <p className="text-sm font-semibold text-white">Active</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-6 right-6 bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="text-xs text-white/60">Response</p>
-                          <p className="text-sm font-semibold text-white">&lt; 1s</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="absolute top-1/2 right-4 -translate-y-1/2 space-y-3">
-                      {['EEG', 'GPS', 'GSM'].map((tech, i) => (
-                        <div key={i} className="bg-white/10 backdrop-blur rounded-lg px-3 py-2 border border-white/10">
-                          <p className="text-xs text-white/80 font-medium">{tech}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Right - Content */}
-            <div ref={addToRefs} className="reveal order-1 lg:order-2">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-6">
-                <BookOpen className="w-4 h-4" />
-                <span>About The Project</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-                Revolutionizing
-                <span className="text-blue-600"> Rider Safety</span>
-              </h2>
-              <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                Our Smart Helmet Research Project combines cutting-edge AI, IoT sensors, and real-time data processing to create the next generation of protective headgear. The system continuously monitors vital signs, detects anomalies, and provides instant alerts to prevent accidents before they happen.
-              </p>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {[{ icon: Brain, title: 'AI Detection', desc: '95%+ accuracy' }, { icon: Wifi, title: 'Real-time Sync', desc: '<1s response' }, { icon: Shield, title: 'Impact Protection', desc: 'Advanced materials' }, { icon: Smartphone, title: 'Mobile App', desc: 'iOS & Android' }].map((item, i) => (
-                  <div key={i} className="flex items-start gap-4 p-4 bg-slate-50 rounded-xl">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900">{item.title}</h4>
-                      <p className="text-sm text-slate-500">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========== FEATURES SECTION ========== */}
-      <section id="features" className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div ref={addToRefs} className="reveal text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
-              <Zap className="w-4 h-4" />
-              <span>Key Capabilities</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Advanced <span className="text-blue-600">Features</span>
-            </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">Cutting-edge technology integrated for maximum safety</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[{ icon: Activity, title: 'Stress Detection', desc: 'EEG sensors monitor rider stress levels in real-time, alerting when attention drops.', color: 'blue' }, { icon: Brain, title: 'Drowsiness Alert', desc: 'AI-powered eye tracking detects fatigue and triggers immediate warnings.', color: 'cyan' }, { icon: Zap, title: 'Accident Response', desc: 'Automatic emergency contact notification with GPS location when impact detected.', color: 'indigo' }].map((f, i) => (
-              <div key={i} ref={addToRefs} className="reveal group bg-white rounded-2xl p-8 border border-slate-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300">
-                <div className={`w-16 h-16 bg-${f.color}-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  <f.icon className={`w-8 h-8 text-${f.color}-600`} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{f.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== DOMAIN SECTION ========== */}
-      <section id="domain" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div ref={addToRefs} className="reveal text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-medium mb-4">
-              <Search className="w-4 h-4" />
-              <span>Research Framework</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Research Domain</h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">Smart Helmet Research Framework & AI Methodology</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {domainSections.map((s, i) => {
-              const Icon = s.icon;
-              const colorMap = {
-                blue: 'from-blue-500/20 to-blue-600/10 border-blue-500/30 text-blue-600',
-                cyan: 'from-cyan-500/20 to-cyan-600/10 border-cyan-500/30 text-cyan-600',
-                orange: 'from-orange-500/20 to-orange-600/10 border-orange-500/30 text-orange-600',
-                purple: 'from-purple-500/20 to-purple-600/10 border-purple-500/30 text-purple-600',
-                emerald: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30 text-emerald-600',
-                indigo: 'from-indigo-500/20 to-indigo-600/10 border-indigo-500/30 text-indigo-600',
-              };
-              return (
-                <div key={i} ref={addToRefs} className="reveal group bg-slate-50 border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-                  <div className="flex items-start space-x-4">
-                    <div className={`flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${colorMap[s.color]} border`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-slate-900 mb-3">{s.title}</h3>
-                      <p className="text-slate-600 leading-relaxed">{s.content}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== MILESTONES SECTION ========== */}
-      <section id="milestones" className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div ref={addToRefs} className="reveal text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium mb-4">
-              <Flag className="w-4 h-4" />
-              <span>Project Timeline</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Project Milestones</h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">Track our research progress through key assessment phases</p>
-          </div>
-          <div className="space-y-4">
-            {milestones.map((m, i) => (
-              <div key={m.id} ref={addToRefs} className="reveal group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all duration-300" style={{ transitionDelay: `${i * 50}ms` }}>
-                <button onClick={() => toggleMilestone(m.id)} className="w-full px-8 py-6 flex items-center justify-between text-left focus:outline-none">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold">{m.id}</span>
-                      <h3 className="text-xl font-bold text-slate-900">{m.title}</h3>
-                    </div>
-                    <p className="text-slate-500 ml-14">{m.assessment}</p>
-                  </div>
-                  <div className="flex items-center space-x-4 ml-4">
-                    <div className="text-right hidden sm:block">
-                      <div className="flex items-center text-slate-400 mb-1"><Calendar className="w-4 h-4 mr-2" /><span className="text-sm font-medium">{m.date}</span></div>
-                      <div className="flex items-center text-blue-600"><Award className="w-4 h-4 mr-2" /><span className="text-sm font-medium">{m.marks}</span></div>
-                    </div>
-                    <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                      {openMilestone === m.id ? <ChevronRight className="w-6 h-6 text-blue-600 rotate-90 transition-transform" /> : <ChevronRight className="w-6 h-6 text-slate-400 transition-transform" />}
-                    </div>
-                  </div>
-                </button>
-                {openMilestone === m.id && (
-                  <div className="px-8 pb-6 border-t border-slate-100">
-                    <h4 className="text-lg font-semibold text-slate-900 mt-4 mb-3">Assessment Details</h4>
-                    <ul className="space-y-2">
-                      {m.details.map((d, idx) => (
-                        <li key={idx} className="flex items-start text-slate-600"><span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0" />{d}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== DOCUMENTS SECTION ========== */}
-      <section id="documents" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div ref={addToRefs} className="reveal text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium mb-4">
-              <FolderOpen className="w-4 h-4" />
-              <span>Downloads</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Project Documents</h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">Access all Smart Helmet research documentation and deliverables</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {documents.map((d, i) => (
-              <div key={i} ref={addToRefs} className="reveal group bg-slate-50 border border-slate-200 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-xl transition-all duration-300">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${d.color === 'blue' ? 'from-blue-500 to-blue-600' : 'from-cyan-500 to-blue-500'} shadow-lg`}>
-                    <FileText className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border border-emerald-500/30 bg-emerald-50 text-emerald-600">
-                    <CheckCircle className="w-3 h-3 mr-1" /> Available
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">{d.title}</h3>
-                <p className="text-slate-600 mb-4">{d.desc}</p>
-                <a href={`/documents/${d.file}`} download className={`w-full flex items-center justify-center px-4 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:shadow-lg bg-gradient-to-r ${d.color === 'blue' ? 'from-blue-600 to-blue-500' : 'from-cyan-600 to-cyan-500'} hover:opacity-90`}>
-                  <Download className="w-4 h-4 mr-2" /> Download
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== PRESENTATIONS SECTION ========== */}
-      <section id="presentations" className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div ref={addToRefs} className="reveal text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 text-orange-700 text-sm font-medium mb-4">
-              <Presentation className="w-4 h-4" />
-              <span>Presentations</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Project Presentations</h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">Access presentation slides and materials</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[{ title: 'Proposal Presentation', desc: 'Initial project proposal', file: 'Proposal-Presentation1.pptx', type: '.pptx', color: 'blue', icon: Presentation, status: 'Available' }, { title: 'Progress Presentation 1', desc: 'First progress review', file: '25-26J-294-PP1.pdf', type: '.pdf', color: 'cyan', icon: FileText, status: 'Available' }, { title: 'Progress Presentation 2', desc: 'Second progress review', file: '25-26J 294 - PP2.pptx', type: '.pptx', color: 'blue', icon: Presentation, status: 'Available' }, { title: 'Final Presentation', desc: 'Coming soon', file: null, type: '.pptx', color: 'cyan', icon: Presentation, status: 'Coming Soon' }].map((p, i) => {
-              const Icon = p.icon;
-              const isBlue = p.color === 'blue';
-              return (
-                <div key={i} ref={addToRefs} className="reveal group bg-white border border-slate-200 rounded-2xl p-8 hover:border-orange-300 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br ${isBlue ? 'from-blue-500 to-blue-600' : 'from-cyan-500 to-blue-500'} shadow-lg`}>
-                      <Icon className="w-7 h-7 text-white" />
-                    </div>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${p.status === 'Available' ? 'border-emerald-500/30 bg-emerald-50 text-emerald-600' : 'border-amber-500/30 bg-amber-50 text-amber-600'}`}>
-                      {p.status === 'Available' ? <CheckCircle className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}{p.status}
+                
+                {/* Progress Indicator */}
+                <div className="mt-8 pt-6 border-t border-slate-100">
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <span className={`font-semibold ${
+                      activeScopeSection === 'literature' ? 'text-blue-600' :
+                      activeScopeSection === 'gap' ? 'text-violet-600' :
+                      activeScopeSection === 'problem' ? 'text-rose-500' :
+                      activeScopeSection === 'objectives' ? 'text-emerald-600' :
+                      activeScopeSection === 'methodology' ? 'text-indigo-600' :
+                      'text-violet-600'
+                    }`}>Progress</span>
+                    <span className="text-[#1a1a2e]/40">
+                      {['literature', 'gap', 'problem', 'objectives', 'methodology', 'technologies'].indexOf(activeScopeSection) + 1}/6
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">{p.title}</h3>
-                  <p className="text-slate-600 mb-4">{p.desc}</p>
-                  {p.file ? (
-                    <a href={`/presentations/${p.file}`} download className={`w-full flex items-center justify-center px-4 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:shadow-lg bg-gradient-to-r ${isBlue ? 'from-blue-600 to-blue-500' : 'from-cyan-600 to-cyan-500'} hover:opacity-90`}>
-                      <Download className="w-4 h-4 mr-2" /> Download {p.type}
-                    </a>
-                  ) : (
-                    <button disabled className="w-full flex items-center justify-center px-4 py-3 bg-slate-100 rounded-xl text-slate-400 cursor-not-allowed font-medium border border-slate-200">
-                      <Clock className="w-4 h-4 mr-2" /> Coming Soon
-                    </button>
-                  )}
+                  <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        activeScopeSection === 'literature' ? 'bg-blue-600' :
+                        activeScopeSection === 'gap' ? 'bg-violet-600' :
+                        activeScopeSection === 'problem' ? 'bg-rose-500' :
+                        activeScopeSection === 'objectives' ? 'bg-emerald-600' :
+                        activeScopeSection === 'methodology' ? 'bg-indigo-600' :
+                        'bg-violet-600'
+                      }`}
+                      style={{ width: `${((['literature', 'gap', 'problem', 'objectives', 'methodology', 'technologies'].indexOf(activeScopeSection) + 1) / 6) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-[#1a1a2e]/40 mt-2">Scroll to see more</p>
                 </div>
-              );
-            })}
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="lg:col-span-9 space-y-16">
+              {/* Literature Survey - Blue Theme */}
+              <div id="scope-literature" className="scroll-mt-24">
+                <div className="text-sm font-extrabold text-blue-600 uppercase tracking-wider mb-3">
+                  01. Literature Survey
+                </div>
+                <div className="border-l-2 border-blue-600 pl-6 mb-6">
+                  <p className="text-[#1a1a2e]/70 leading-relaxed">
+                    Global road safety is shifting from passive protection to proactive, intelligent intervention for vulnerable road users, particularly motorcyclists. A comprehensive review of 50+ research papers was conducted, covering IoT-enabled smart helmets, EEG-based cognitive monitoring, IMU-driven risk detection, and multimodal sensor fusion systems.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-blue-700">Road Safety in Sri Lanka:</span> Motorcyclists account for a significant proportion of road fatalities, with risk factors including cognitive stress, fatigue, physiological strain, and hazardous road conditions.
+                    </p>
+                  </div>
+                  <div className="bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-blue-700">Existing Solutions:</span> Current systems primarily focus on post-crash alerting and basic vital sign monitoring, lacking comprehensive integration.
+                    </p>
+                  </div>
+                  <div className="bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-blue-700">EEG & Wearable Tech:</span> Recent advances in wearable EEG, edge-based machine learning, and real-time sensor fusion show promising results for cognitive monitoring.
+                    </p>
+                  </div>
+                  <div className="bg-blue-50/50 rounded-xl p-5 border border-blue-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-blue-700">Fragmented Systems:</span> Most smart helmet solutions remain fragmented, addressing only isolated aspects rather than integrating multiple risk factors.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Research Gap - Purple/Violet Theme */}
+              <div id="scope-gap" className="scroll-mt-24">
+                <div className="text-sm font-extrabold text-violet-600 uppercase tracking-wider mb-3">
+                  02. Research Gap
+                </div>
+                <div className="border-l-2 border-violet-600 pl-6 mb-6">
+                  <p className="text-[#1a1a2e]/70 leading-relaxed">
+                    Despite progress in smart helmet technology, several critical gaps persist. Existing solutions fail to integrate physiological, cognitive, kinematic, and geospatial risk factors into a unified safety platform.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="bg-violet-50/50 rounded-xl p-5 border border-violet-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-violet-700">Isolated System Approaches:</span> Most systems address only isolated aspects (e.g., physiological monitoring or post-crash notification) rather than integrating multiple risk factors holistically.
+                    </p>
+                  </div>
+                  <div className="bg-violet-50/50 rounded-xl p-5 border border-violet-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-violet-700">Limited EEG Integration:</span> Lack of real-time EEG for cognitive stress and fatigue detection in actual riding conditions remains a significant gap.
+                    </p>
+                  </div>
+                  <div className="bg-violet-50/50 rounded-xl p-5 border border-violet-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-violet-700">No Post-Journey Analytics:</span> Insufficient integration of post-journey risk assessment and danger zone prediction using historical ride data.
+                    </p>
+                  </div>
+                  <div className="bg-violet-50/50 rounded-xl p-5 border border-violet-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-violet-700">Environmental Context Gap:</span> Very few solutions integrate environmental context (weather and traffic) with rider state monitoring for comprehensive safety.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Research Problem & Solution - Rose/Coral Theme */}
+              <div id="scope-problem" className="scroll-mt-24">
+                <div className="text-sm font-extrabold text-rose-500 uppercase tracking-wider mb-3">
+                  03. Research Problem & Solution
+                </div>
+                <div className="border-l-2 border-rose-500 pl-6 mb-6">
+                  <p className="text-[#1a1a2e]/70 leading-relaxed">
+                    Motorcyclists in Sri Lanka face elevated risks due to cognitive stress, fatigue, physiological anomalies, and dynamic road hazards, yet current helmets offer only passive protection.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="bg-rose-50/50 rounded-xl p-5 border border-rose-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-rose-600">Research Problem:</span> Current helmets provide passive protection only. Riders face risks from stress, fatigue, health issues, and road hazards without real-time monitoring or alerts.
+                    </p>
+                  </div>
+                  <div className="bg-rose-50/50 rounded-xl p-5 border border-rose-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-rose-600">Member1 - Health Monitoring:</span> Real-time physiological health monitoring with AI-based cardiac risk prediction using smartwatch sensors.
+                    </p>
+                  </div>
+                  <div className="bg-rose-50/50 rounded-xl p-5 border border-rose-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-rose-600">Member2 - EEG Detection:</span> EEG-based cognitive stress and fatigue detection with hybrid physiological fallback for comprehensive monitoring.
+                    </p>
+                  </div>
+                  <div className="bg-rose-50/50 rounded-xl p-5 border border-rose-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-rose-600">Member3 & 4 - Risk Analytics:</span> IMU-based risky event detection and route-level danger zone prediction using weather, traffic, and historical data.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Research Objectives - Emerald/Mint Theme */}
+              <div id="scope-objectives" className="scroll-mt-24">
+                <div className="text-sm font-extrabold text-emerald-600 uppercase tracking-wider mb-3">
+                  04. Research Objectives
+                </div>
+                <div className="border-l-2 border-emerald-600 pl-6 mb-6">
+                  <p className="text-[#1a1a2e]/70 leading-relaxed">
+                    The primary goal is to develop an intelligent, multimodal smart helmet system for proactive rider safety with four integrated core modules.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="bg-emerald-50/50 rounded-xl p-5 border border-emerald-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-emerald-700">Member1 - Health Monitoring:</span> Develop real-time physiological health monitoring with AI-based cardiac risk assessment using MAX30102 and MLX90614 sensors.
+                    </p>
+                  </div>
+                  <div className="bg-emerald-50/50 rounded-xl p-5 border border-emerald-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-emerald-700">Member2 - EEG Detection:</span> Implement EEG-based cognitive stress and fatigue detection with hybrid physiological fallback using NeuroSky headset.
+                    </p>
+                  </div>
+                  <div className="bg-emerald-50/50 rounded-xl p-5 border border-emerald-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-emerald-700">Member3 - IMU Analytics:</span> Create IMU-based risky riding event detection and post-journey risk analytics with danger zone clustering using MPU6050.
+                    </p>
+                  </div>
+                  <div className="bg-emerald-50/50 rounded-xl p-5 border border-emerald-100">
+                    <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                      <span className="font-semibold text-emerald-700">Member4 - Danger Prediction:</span> Build predictive danger zone module integrating historical data, weather, and traffic conditions with Google Maps API.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 bg-emerald-50/50 rounded-xl p-5 border border-emerald-100">
+                  <p className="text-sm text-[#1a1a2e]/80 leading-relaxed">
+                    <span className="font-semibold text-emerald-700">System Integration:</span> Integrate all modules into a unified Flutter application with multilingual voice guidance (FlutterTTS, PicoVoice) and personalized safety reports with Firebase backend.
+                  </p>
+                </div>
+              </div>
+
+              {/* Methodology - Indigo Theme */}
+              <div id="scope-methodology" className="scroll-mt-24">
+                <div className="text-sm font-extrabold text-indigo-600 uppercase tracking-wider mb-3">
+                  05. Methodology
+                </div>
+                <div className="border-l-2 border-indigo-600 pl-6 mb-6">
+                  <p className="text-[#1a1a2e]/70 leading-relaxed">
+                    The methodology combines hardware integration, edge computing, and mobile AI development to create a comprehensive smart helmet system.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mb-3">
+                      <Cpu className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-2">Hardware Integration</h4>
+                    <p className="text-xs text-[#1a1a2e]/60">NeuroSky EEG headset, ESP32 smartwatch and helmet with MPU6050 IMU, GPS, MAX30102 and MLX90614 sensors.</p>
+                  </div>
+                  <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mb-3">
+                      <Brain className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-2">ML Model Development</h4>
+                    <p className="text-xs text-[#1a1a2e]/60">TensorFlow Lite models for stress detection (1D-CNN), risk classification (Keras NN), and cardiac risk assessment.</p>
+                  </div>
+                  <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mb-3">
+                      <Shield className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <h4 className="font-semibold text-[#1a1a2e] mb-2">System Validation</h4>
+                    <p className="text-xs text-[#1a1a2e]/60">Real-world testing on Colombo roads, performance benchmarking, and user acceptance evaluation.</p>
+                  </div>
+                </div>
+                <div className="mt-4 grid sm:grid-cols-2 gap-4">
+                  <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100">
+                    <h4 className="font-semibold text-[#1a1a2e] mb-2 flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-indigo-600" />
+                      Data Processing
+                    </h4>
+                    <p className="text-xs text-[#1a1a2e]/60">Real-time signal processing, FFT for EEG bands, feature engineering for IMU data, hybrid edge-mobile processing.</p>
+                  </div>
+                  <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100">
+                    <h4 className="font-semibold text-[#1a1a2e] mb-2 flex items-center gap-2">
+                      <Wifi className="w-4 h-4 text-indigo-600" />
+                      Communication
+                    </h4>
+                    <p className="text-xs text-[#1a1a2e]/60">Bluetooth Low Energy communication between sensors and Flutter app, Firebase Firestore backend.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technologies - Violet Theme */}
+              <div id="scope-technologies" className="scroll-mt-24">
+                <div className="text-sm font-extrabold text-violet-600 uppercase tracking-wider mb-3">
+                  06. Technologies
+                </div>
+                <div className="border-l-2 border-violet-600 pl-6 mb-6">
+                  <p className="text-[#1a1a2e]/70 leading-relaxed">
+                    The system is built using modern embedded systems, machine learning frameworks, and mobile development technologies.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-black mb-2">Embedded Systems</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {['ESP32', 'Arduino IDE', 'ESP-IDF', 'NeuroSky EEG', 'MPU6050 IMU', 'MAX30102', 'MLX90614', 'NEO-6M GPS'].map((tech) => (
+                        <span key={tech} className="px-3 py-1.5 bg-violet-50/50 rounded-lg text-sm font-medium text-violet-700 border border-violet-100">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-black mb-2">Machine Learning</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {['TensorFlow Lite', 'PyTorch', '1D-CNN', 'Keras', 'Random Forest', 'Scikit-learn'].map((tech) => (
+                        <span key={tech} className="px-3 py-1.5 bg-violet-50/50 rounded-lg text-sm font-medium text-violet-700 border border-violet-100">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-black mb-2">Mobile & Backend</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {['Flutter', 'Dart', 'Firebase Firestore', 'Google Maps API', 'OpenWeatherMap'].map((tech) => (
+                        <span key={tech} className="px-3 py-1.5 bg-violet-50/50 rounded-lg text-sm font-medium text-violet-700 border border-violet-100">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-black mb-2">Voice & Communication</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {['FlutterTTS', 'PicoVoice', 'Bluetooth Low Energy', 'WebSockets'].map((tech) => (
+                        <span key={tech} className="px-3 py-1.5 bg-violet-50/50 rounded-lg text-sm font-medium text-violet-700 border border-violet-100">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== MILESTONES SECTION - Timeline ========== */}
+      <section id="milestones" className="py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-12">
+            <div className="text-xs font-bold text-[#F26522] uppercase tracking-wider mb-3">
+              MILESTONES
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-[#1a1a2e] mb-4">
+              Project Milestones
+            </h2>
+            <p className="text-[#1a1a2e]/60 max-w-2xl leading-relaxed">
+              A structured timeline of all research assessments — including dates, marks allocation, deliverables, and current status. Click any milestone to expand details.
+            </p>
+          </div>
+
+          {/* Summary Pills */}
+          <div className="flex flex-wrap gap-3 mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-full">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-sm font-semibold text-emerald-700">3 Completed</span>
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-100 rounded-full">
+              <div className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="text-sm font-semibold text-amber-700">1 Upcoming</span>
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-full">
+              <FileText className="w-4 h-4 text-slate-400" />
+              <span className="text-sm font-semibold text-slate-600">1 Pending</span>
+            </div>
+          </div>
+
+          {/* Timeline */}
+          <div className="relative">
+            {/* Vertical Timeline Line */}
+            <div className="absolute left-6 top-8 bottom-8 w-px bg-slate-200" />
+            
+            <div className="space-y-6">
+              {[
+                {
+                  id: 1,
+                  title: 'Project Proposal',
+                  status: 'Completed',
+                  date: 'September 2025',
+                  marks: 'Marks Allocated: 6%',
+                  color: 'emerald',
+                  iconColor: 'bg-[#F26522]',
+                  description: 'The project proposal marks the formal beginning of the research. The team presented the problem domain, motivation, preliminary literature review, proposed solution outline, and project plan to the panel.',
+                  deliverables: [
+                    { text: 'Proposal document (≈10 pages)', done: true },
+                    { text: 'Project charter', done: true },
+                    { text: 'Proposal presentation slides', done: true },
+                    { text: 'Gantt chart & timeline', done: true }
+                  ]
+                },
+                {
+                  id: 2,
+                  title: 'Progress Presentation 1',
+                  status: 'Completed',
+                  date: 'January 2026',
+                  marks: 'Marks Allocated: 15%',
+                  color: 'emerald',
+                  iconColor: 'bg-[#F26522]',
+                  description: 'First progress review covering initial research findings, methodology development, and preliminary results.',
+                  deliverables: [
+                    { text: 'Progress report document', done: true },
+                    { text: 'Presentation slides', done: true },
+                    { text: 'Preliminary findings', done: true }
+                  ]
+                },
+                {
+                  id: 3,
+                  title: 'Progress Presentation 2',
+                  status: 'Completed',
+                  date: 'March 2026',
+                  marks: 'Marks Allocated: 18%',
+                  color: 'emerald',
+                  iconColor: 'bg-[#F26522]',
+                  description: 'Second progress review with substantial implementation progress and refined methodology.',
+                  deliverables: [
+                    { text: 'Updated progress report', done: true },
+                    { text: 'System prototype demo', done: true },
+                    { text: 'Testing results', done: true }
+                  ]
+                },
+                {
+                  id: 4,
+                  title: 'Final presentation',
+                  status: 'Upcoming',
+                  date: 'May 2026',
+                  marks: 'Marks Allocated: 30%',
+                  color: 'amber',
+                  iconColor: 'bg-amber-400',
+                  description: 'Final project presentation demonstrating complete system implementation, testing results, and research outcomes.',
+                  deliverables: [
+                    { text: 'Final thesis document', done: false },
+                    { text: 'Final presentation', done: false },
+                    { text: 'System demonstration', done: false }
+                  ]
+                },
+                {
+                  id: 5,
+                  title: 'Viva',
+                  status: 'Pending',
+                  date: 'May 2026',
+                  marks: 'Marks Allocated: 10%',
+                  color: 'slate',
+                  iconColor: 'bg-slate-300',
+                  description: 'Oral defense and Q&A session covering all aspects of the research project.',
+                  deliverables: [
+                    { text: 'Viva preparation', done: false },
+                    { text: 'Demonstration setup', done: false }
+                  ]
+                }
+              ].map((milestone) => {
+                const isExpanded = expandedMilestones[milestone.id];
+                const isCompleted = milestone.status === 'Completed';
+                const isUpcoming = milestone.status === 'Upcoming';
+                
+                const toggleExpand = () => {
+                  setExpandedMilestones(prev => ({
+                    ...prev,
+                    [milestone.id]: !prev[milestone.id]
+                  }));
+                };
+                
+                return (
+                  <div key={milestone.id} className="relative flex gap-4">
+                    {/* Timeline Circle Icon */}
+                    <div className="relative z-10 flex-shrink-0">
+                      <div className={`w-12 h-12 rounded-full ${milestone.iconColor} flex items-center justify-center shadow-lg`}>
+                        <CheckCircle className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    
+                    {/* Card */}
+                    <div className="flex-1 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                      {/* Card Header - Always Visible */}
+                      <div 
+                        className="p-5 cursor-pointer hover:bg-slate-50/50 transition-colors"
+                        onClick={toggleExpand}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              {/* Status Badge */}
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                                isCompleted 
+                                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                                  : isUpcoming
+                                    ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                                    : 'bg-slate-100 text-slate-600 border border-slate-200'
+                              }`}>
+                                {isCompleted && <CheckCircle className="w-3 h-3" />}
+                                {isUpcoming && <Clock className="w-3 h-3" />}
+                                {!isCompleted && !isUpcoming && <FileText className="w-3 h-3" />}
+                                {milestone.status}
+                              </span>
+                              
+                              {/* Date & Marks */}
+                              <span className="flex items-center gap-1 text-xs text-slate-500">
+                                <Calendar className="w-3 h-3" />
+                                {milestone.date}
+                              </span>
+                              <span className="text-xs text-slate-400">•</span>
+                              <span className="text-xs text-slate-500">{milestone.marks}</span>
+                            </div>
+                            
+                            <h3 className="text-lg font-bold text-[#1a1a2e]">
+                              {milestone.title}
+                            </h3>
+                          </div>
+                          
+                          {/* Expand Arrow */}
+                          <div className={`text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                            <ChevronRight className="w-5 h-5 rotate-90" />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Expandable Content */}
+                      <div className={`border-t border-slate-100 transition-all duration-300 ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                        <div className="p-5">
+                          <p className="text-sm text-[#1a1a2e]/70 mb-5 leading-relaxed">
+                            {milestone.description}
+                          </p>
+                          
+                          {/* Key Deliverables */}
+                          <div>
+                            <h4 className="text-xs font-bold text-[#F26522] uppercase tracking-wider mb-3">
+                              Key Deliverables
+                            </h4>
+                            <div className="grid sm:grid-cols-2 gap-3">
+                              {milestone.deliverables.map((item, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                                    item.done ? 'bg-emerald-500' : 'bg-slate-200'
+                                  }`}>
+                                    {item.done && <CheckCircle className="w-3 h-3 text-white" />}
+                                  </div>
+                                  <span className={`text-sm ${item.done ? 'text-[#1a1a2e]' : 'text-slate-400'}`}>
+                                    {item.text}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== DOWNLOADS SECTION ========== */}
+      <section id="downloads" className="py-20 lg:py-28 bg-slate-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-12">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0055FF]/10 text-[#0055FF] text-xs font-semibold mb-4">
+                <FileText className="w-3.5 h-3.5" />
+                Resources & Artifacts
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-[#001A33] mb-4">
+                Research Documents
+              </h2>
+              <p className="text-[#001A33]/60 max-w-xl">
+                Access all project deliverables including research papers, technical documentation, and presentation slides.
+              </p>
+            </div>
+            <div className="mt-6 lg:mt-0 flex items-center gap-4 text-sm text-[#001A33]/50">
+              <span className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                {documents.filter(d => d.status === 'Available').length + presentations.filter(p => p.status === 'Available').length} Available
+              </span>
+              <span className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-400" />
+                {documents.filter(d => d.status === 'Pending').length + presentations.filter(p => p.status === 'Pending').length} Coming Soon
+              </span>
+            </div>
+          </div>
+
+          {/* Documents Grid */}
+          <div className="mb-16">
+            <h3 className="text-lg font-bold text-[#001A33] mb-6 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              Research Documents
+            </h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {documents.map((doc, index) => (
+                <div 
+                  key={index} 
+                  className="group bg-white rounded-2xl p-6 border border-slate-400 hover:border-[#001A33] hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300"
+                >
+                  {/* Icon & Status */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center group-hover:from-blue-50 group-hover:to-indigo-50 transition-colors">
+                      <FileText className="w-6 h-6 text-slate-400 group-hover:text-[#0055FF] transition-colors" />
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      doc.status === 'Available' 
+                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                        : 'bg-amber-50 text-amber-600 border border-amber-100'
+                    }`}>
+                      {doc.status}
+                    </span>
+                  </div>
+                  
+                  {/* Content */}
+                  <h4 className="font-bold text-[#001A33] mb-2 line-clamp-1">{doc.title}</h4>
+                  <p className="text-sm text-[#001A33]/50 mb-4 line-clamp-2">{doc.desc}</p>
+                  
+                  {/* Meta & Action */}
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                    <div className="flex items-center gap-2 text-xs text-[#001A33]/40">
+                      <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-500 font-medium">PDF</span>
+                      <span>{doc.size}</span>
+                    </div>
+                    {doc.file ? (
+                      <a 
+                        href={`/documents/${doc.file}`}
+                        download
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0055FF] hover:text-[#0044CC] transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </a>
+                    ) : (
+                      <span className="text-sm text-slate-300 font-medium flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        Soon
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Presentations Grid */}
+          <div>
+            <h3 className="text-lg font-bold text-[#001A33] mb-6 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                <Presentation className="w-4 h-4 text-white" />
+              </div>
+              Presentations
+            </h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {presentations.map((presentation, index) => {
+                const Icon = presentation.icon;
+                return (
+                  <div
+                    key={index}
+                    className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-500/15 transition-all duration-300"
+                  >
+                    {/* Image Header with Overlays */}
+                    <div className="relative h-36 overflow-hidden">
+                      <img
+                        src={presentation.image}
+                        alt={presentation.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
+                      />
+                      {/* PowerPoint/PDF Icon Badge - Bottom Left */}
+                      <div className="absolute bottom-3 left-3 w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center shadow-md">
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      {/* Status Badge - Top Right */}
+                      <div className={`absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        presentation.status === 'Available'
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-100 text-amber-700 border border-amber-200'
+                      }`}>
+                        {presentation.status === 'Available' ? <CheckCircle className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
+                        {presentation.status}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5">
+                      <h3 className="text-lg font-bold text-slate-900 mb-2">
+                        {presentation.title}
+                      </h3>
+                      <p className="text-slate-600 mb-4 leading-relaxed text-sm line-clamp-2">
+                        {presentation.description}
+                      </p>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {presentation.tags.slice(0, 2).map((tag, tagIndex) => (
+                          <span
+                            key={tagIndex}
+                            className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {presentation.tags.length > 2 && (
+                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded-full">
+                            +{presentation.tags.length - 2}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Footer with Date, Slides, and View Button */}
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                        <div className="flex items-center gap-3 text-slate-500">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                            <span className="text-xs font-medium">{presentation.date}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <FileText className="w-3.5 h-3.5 text-orange-500" />
+                            <span className="text-xs font-medium">{presentation.slides}</span>
+                          </div>
+                        </div>
+
+                        {presentation.filename ? (
+                          <a
+                            href={`/presentations/${presentation.filename}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View
+                          </a>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex items-center gap-1.5 px-4 py-2 bg-slate-200 text-slate-400 text-xs font-semibold rounded-lg cursor-not-allowed"
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            Soon
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ========== TEAM SECTION ========== */}
-      <section id="team" className="py-24 bg-white">
+      <section id="team" className="py-20 lg:py-28 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div ref={addToRefs} className="reveal text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
-              <Users className="w-4 h-4" />
-              <span>Our Team</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Meet the <span className="text-blue-600">Researchers</span>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#001A33] mb-4">
+              Meet Our Team
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">Dedicated experts pushing the boundaries of safety technology</p>
+            <p className="text-[#001A33]/60 max-w-2xl mx-auto">
+              Dedicated researchers and supervisors leading the Smart Helmet project
+            </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {teamMembers.map((member, i) => (
-              <div key={i} ref={addToRefs} className="reveal group bg-slate-50 rounded-2xl p-8 border border-slate-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300 text-center">
-                <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                  {member.image}
+
+          {/* Supervisors */}
+          <div className="mb-16">
+            <h3 className="text-xs font-bold text-[#001A33]/40 uppercase tracking-wider mb-6">Supervisors</h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              {supervisors.map((supervisor, index) => {
+                const colors = accentColors[supervisor.accent];
+                return (
+                  <div key={index} className="group bg-white rounded-2xl p-6 border border-slate-300 card-hover text-center">
+                    <div className={`w-full h-32 rounded-xl ${colors.bg} mb-4 flex items-center justify-center overflow-hidden`}>
+                      <img
+                        src={supervisor.image}
+                        alt={supervisor.name}
+                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                    </div>
+                    <h4 className="font-bold text-[#001A33] mb-1">{supervisor.name}</h4>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3 ${colors.bg} ${colors.icon}`}>
+                      {supervisor.title}
+                    </span>
+                    <p className="text-sm text-[#001A33]/60 mb-1">{supervisor.institution}</p>
+                    <p className="text-xs text-slate-400 mb-4">{supervisor.department}</p>
+                    <a 
+                      href={supervisor.linkedin}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-[#001A33] hover:border-[#0055FF] hover:text-[#0055FF] transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      LinkedIn
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Group Members */}
+          <div>
+            <h3 className="text-xs font-bold text-[#001A33]/40 uppercase tracking-wider mb-6">Group Members</h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {teamMembers.map((member, index) => {
+                const colors = accentColors[member.accent];
+                return (
+                  <div key={index} className="group bg-white rounded-2xl p-6 border border-slate-300 card-hover text-center">
+                    <div className={`w-full h-28 rounded-xl ${colors.bg} mb-4 flex items-center justify-center overflow-hidden`}>
+                      <img
+                        src={member.image}
+                        alt={member.name}
+                        className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                    </div>
+                    <h4 className="font-bold text-[#001A33] mb-1">{member.name}</h4>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-2 ${colors.bg} ${colors.icon}`}>
+                      {member.title}
+                    </span>
+                    <p className="text-xs text-slate-400 mb-4">{member.type}</p>
+                    <a 
+                      href={member.linkedin}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-[#001A33] hover:border-[#0055FF] hover:text-[#0055FF] transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      LinkedIn
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== ACHIEVEMENTS SECTION ========== */}
+      <section id="achievements" className="py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#001A33] mb-4">
+              Our Achievements
+            </h2>
+            <p className="text-[#001A33]/60 max-w-2xl mx-auto">
+              Recognitions and milestones in our Smart Helmet research journey
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { icon: Award, value: '1', label: 'Research Papers', color: 'blue' },
+              { icon: Trophy, value: '0', label: 'Awards Won', color: 'emerald' },
+              { icon: Users, value: '4', label: 'Team Members', color: 'violet' },
+              { icon: Target, value: '95%', label: 'Accuracy Rate', color: 'rose' },
+            ].map((achievement, index) => (
+              <div key={index} className="group bg-slate-50 rounded-2xl p-8 text-center hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 hover:-translate-y-1">
+                <div className={`w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center ${
+                  achievement.color === 'blue' ? 'bg-blue-100' :
+                  achievement.color === 'emerald' ? 'bg-emerald-100' :
+                  achievement.color === 'violet' ? 'bg-violet-100' :
+                  'bg-rose-100'
+                }`}>
+                  <achievement.icon className={`w-8 h-8 ${
+                    achievement.color === 'blue' ? 'text-blue-600' :
+                    achievement.color === 'emerald' ? 'text-emerald-600' :
+                    achievement.color === 'violet' ? 'text-violet-600' :
+                    'text-rose-600'
+                  }`} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1">{member.name}</h3>
-                <p className="text-blue-600 font-medium mb-4">{member.role}</p>
-                <p className="text-sm text-slate-500 mb-4">{member.email}</p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {member.achievements.slice(0, 2).map((achievement, j) => (
-                    <span key={j} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{achievement}</span>
-                  ))}
+                <div className={`text-4xl font-bold mb-2 ${
+                  achievement.color === 'blue' ? 'text-blue-600' :
+                  achievement.color === 'emerald' ? 'text-emerald-600' :
+                  achievement.color === 'violet' ? 'text-violet-600' :
+                  'text-rose-600'
+                }`}>
+                  {achievement.value}
+                </div>
+                <div className="text-sm font-medium text-[#001A33]/60">
+                  {achievement.label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Additional Achievements */}
+          <div className="mt-16 grid md:grid-cols-2 gap-6">
+            {[
+              {
+                title: 'Best Research Project 2025',
+                description: 'Awarded for innovative approach to rider safety using AI and IoT technologies',
+                date: 'December 2025',
+                icon: Trophy
+              },
+              {
+                title: 'IEEE Conference Publication',
+                description: 'Research paper on EEG-based stress detection published in IEEE conference',
+                date: 'November 2025',
+                icon: FileSpreadsheet
+              }
+            ].map((item, index) => (
+              <div key={index} className="bg-white border border-slate-200 rounded-2xl p-6 hover:border-[#0055FF] hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0">
+                    <item.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-[#001A33] mb-2">{item.title}</h4>
+                    <p className="text-sm text-[#001A33]/60 mb-3">{item.description}</p>
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {item.date}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -624,85 +1335,291 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ========== CONTACT SECTION ========== */}
-      <section id="contact" className="py-24 bg-slate-50">
+      {/* ========== GALLERY SECTION ========== */}
+      <section id="gallery" className="py-20 lg:py-28 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div ref={addToRefs} className="reveal text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-medium mb-4">
-              <MessageSquare className="w-4 h-4" />
-              <span>Get in Touch</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-              Let's <span className="text-blue-600">Connect</span>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#001A33] mb-4">
+              Project Gallery
             </h2>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto">Get in touch with our Smart Helmet research team</p>
+            <p className="text-[#001A33]/60 max-w-2xl mx-auto">
+              Visual showcase of our Smart Helmet system development journey
+            </p>
           </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { image: '/helmet.png', title: 'Helmet Prototype', category: 'Hardware' },
+              { image: '/eeg.png', title: 'EEG Sensor Setup', category: 'Sensors' },
+              { image: '/watch.png', title: 'Smart Watch Prototype', category: 'Hardware' },
+              { image: '/testing.jpeg', title: 'Field Testing', category: 'Testing' },
+              { image: '/team.png', title: 'Team Collaboration', category: 'Team' },
+              { image: '/system.png', title: 'System Architecture', category: 'Design' },
+            ].map((item, index) => (
+              <div 
+                key={index} 
+                className="group relative overflow-hidden rounded-2xl aspect-square bg-slate-200 cursor-pointer"
+                onClick={() => setImageViewer({ open: true, image: item.image, title: item.title })}
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <span className="inline-block px-3 py-1 bg-orange-500 text-white text-xs font-semibold rounded-full mb-2">
+                    {item.category}
+                  </span>
+                  <h4 className="text-white font-bold">{item.title}</h4>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========== FEEDBACKS SECTION ========== */}
+      <section id="feedbacks" className="py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#001A33] mb-4">
+              What People Say
+            </h2>
+            <p className="text-[#001A33]/60 max-w-2xl mx-auto">
+              Feedback from experts and users about our Smart Helmet system
+            </p>
+          </div>
+
+          {/* Feedback Slideshow */}
+          <div className="relative">
+            <div className="overflow-hidden">
+              <div 
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${feedbackIndex * 33.333}%)` }}
+              >
+                {[
+                  {
+                    name: 'Chamod Gallage',
+                    role: 'PickMe Rider',
+                    feedback: 'While the helmet is innovative, I found the built-in speaker uncomfortable during long rides. However, the voice guidance from the mobile app is much more user-friendly and easier to hear.',
+                    rating: 3,
+                    image: '/chamod.png'
+                  },
+                  {
+                    name: 'Amila Lakshan',
+                    role: 'Uber Rider',
+                    feedback: 'The Smart Helmet has transformed my daily rides. The stress detection feature helps me stay alert, and the accident alert system gives me peace of mind on busy roads.',
+                    rating: 5,
+                    image: '/lakshan.png'
+                  },
+                  {
+                    name: 'Sadeepa Chathuskara',
+                    role: 'PickMe Rider',
+                    feedback: 'Excellent safety features! The real-time monitoring and voice alerts have significantly improved my riding experience. The mobile app is intuitive and very helpful.',
+                    rating: 5,
+                    image: '/sadeepa.png'
+                  },
+                  {
+                    name: 'Dr. Sajith Perera',
+                    role: 'Safety Researcher',
+                    feedback: 'A remarkable achievement in rider safety technology. The integration of EEG monitoring with IoT creates a comprehensive safety ecosystem for motorcyclists.',
+                    rating: 5,
+                    image: '/sajith.jpeg'
+                  }
+                ].map((item, index) => (
+                  <div key={index} className="w-1/3 flex-shrink-0 px-3">
+                    <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200 hover:border-[#0055FF] hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 h-full">
+                      <div className="flex items-center gap-1 mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-5 h-5 ${i < item.rating ? 'text-orange-500' : 'text-slate-300'}`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <p className="text-[#001A33]/80 mb-6 leading-relaxed text-sm">
+                        "{item.feedback}"
+                      </p>
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                          onError={(e) => {
+                            e.target.src = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="#3B82F6" width="100" height="100"/><text x="50" y="60" font-size="40" text-anchor="middle" fill="white">' + item.name.charAt(0) + '</text></svg>')}`;
+                          }}
+                        />
+                        <div>
+                          <h4 className="font-bold text-[#001A33] text-sm">{item.name}</h4>
+                          <p className="text-xs text-[#001A33]/60">{item.role}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Navigation Buttons */}
+            <button
+              onClick={() => setFeedbackIndex(feedbackIndex > 0 ? feedbackIndex - 1 : 0)}
+              disabled={feedbackIndex === 0}
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all z-10"
+            >
+              <ChevronRight className="w-5 h-5 text-slate-600 rotate-180" />
+            </button>
+            <button
+              onClick={() => setFeedbackIndex(feedbackIndex < 1 ? feedbackIndex + 1 : 1)}
+              disabled={feedbackIndex === 1}
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 bg-white rounded-full shadow-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all z-10"
+            >
+              <ChevronRight className="w-5 h-5 text-slate-600" />
+            </button>
+
+            {/* Dots Indicator */}
+            <div className="flex justify-center gap-2 mt-8">
+              {[0, 1].map((dot) => (
+                <button
+                  key={dot}
+                  onClick={() => setFeedbackIndex(dot)}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    feedbackIndex === dot ? 'bg-[#0055FF] w-8' : 'bg-slate-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== CONTACT SECTION ========== */}
+      <section id="contact" className="py-20 lg:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12">
-            <div ref={addToRefs} className="reveal bg-white border border-slate-200 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-slate-900 mb-6">Send us a Message</h3>
+            {/* Contact Form */}
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#001A33] mb-4">
+                Get in Touch
+              </h2>
+              <p className="text-[#001A33]/60 mb-8">
+                Have questions about our research? We'd love to hear from you.
+              </p>
+              
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Your Name</label>
-                  <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition" placeholder="John Doe" />
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-[#001A33] mb-2">Name</label>
+                    <input 
+                      type="text" 
+                      value={formData.name} 
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      required
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[#001A33] placeholder-slate-400 focus:ring-2 focus:ring-[#0055FF]/20 focus:border-[#0055FF] outline-none transition"
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-[#001A33] mb-2">Email</label>
+                    <input 
+                      type="email" 
+                      value={formData.email} 
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      required
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[#001A33] placeholder-slate-400 focus:ring-2 focus:ring-[#0055FF]/20 focus:border-[#0055FF] outline-none transition"
+                      placeholder="your@email.com"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
-                  <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition" placeholder="john@example.com" />
+                  <label className="block text-sm font-semibold text-[#001A33] mb-2">Subject</label>
+                  <input 
+                    type="text" 
+                    value={formData.subject} 
+                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                    required
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[#001A33] placeholder-slate-400 focus:ring-2 focus:ring-[#0055FF]/20 focus:border-[#0055FF] outline-none transition"
+                    placeholder="How can we help?"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Subject</label>
-                  <input type="text" value={formData.subject} onChange={(e) => setFormData({...formData, subject: e.target.value})} required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition" placeholder="Inquiry about research" />
+                  <label className="block text-sm font-semibold text-[#001A33] mb-2">Message</label>
+                  <textarea 
+                    value={formData.message} 
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    required
+                    rows={5}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[#001A33] placeholder-slate-400 focus:ring-2 focus:ring-[#0055FF]/20 focus:border-[#0055FF] outline-none transition resize-none"
+                    placeholder="Your message..."
+                  />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Message</label>
-                  <textarea value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} required rows={5} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition resize-none" placeholder="Your message..." />
-                </div>
-                <button type="submit" className="w-full flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 font-semibold shadow-lg shadow-blue-500/25">
-                  <Send className="w-4 h-4 mr-2" /> Send Message
+                <button 
+                  type="submit"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#0055FF] text-white font-semibold rounded-xl hover:bg-[#0044CC] transition-all duration-200 shadow-lg shadow-[#0055FF]/25"
+                >
+                  <Send className="w-4 h-4" />
+                  Send Message
                 </button>
               </form>
             </div>
-            <div className="space-y-8">
-              <div ref={addToRefs} className="reveal bg-white border border-slate-200 rounded-2xl p-8">
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">Contact Information</h3>
+
+            {/* Contact Info */}
+            <div className="lg:pl-12">
+              <div className="bg-[#001A33] rounded-2xl p-8 text-white h-full">
+                <h3 className="text-xl font-bold mb-6">Contact Information</h3>
+                
                 <div className="space-y-6">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mr-4">
-                      <Mail className="w-7 h-7 text-blue-600" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 mb-1">Email</h4>
-                      <p className="text-slate-600">research@university.edu</p>
-                      <p className="text-slate-600">team@smarthelmet.org</p>
+                      <p className="font-medium mb-1">Email</p>
+                      <p className="text-white/60 text-sm">research@sliit.lk</p>
                     </div>
                   </div>
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 w-14 h-14 bg-cyan-100 rounded-2xl flex items-center justify-center mr-4">
-                      <Phone className="w-7 h-7 text-cyan-600" />
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 mb-1">Phone</h4>
-                      <p className="text-slate-600">+1 (555) 123-4567</p>
+                      <p className="font-medium mb-1">Phone</p>
+                      <p className="text-white/60 text-sm">+94 11 210 5000</p>
                     </div>
                   </div>
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mr-4">
-                      <MapPin className="w-7 h-7 text-blue-600" />
+                  
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-900 mb-1">Location</h4>
-                      <p className="text-slate-600">AI Research Laboratory</p>
-                      <p className="text-slate-600">University Campus, Building C</p>
+                      <p className="font-medium mb-1">Location</p>
+                      <p className="text-white/60 text-sm">
+                        Sri Lanka Institute of Information Technology<br />
+                        Malabe, Colombo
+                      </p>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div ref={addToRefs} className="reveal relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-600 p-10 text-white shadow-xl">
-                <h3 className="text-2xl font-bold mb-4">Research Lab Hours</h3>
-                <div className="space-y-2 text-blue-100">
-                  <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
-                  <p>Saturday: 10:00 AM - 4:00 PM</p>
-                  <p>Sunday: Closed</p>
+
+                <div className="mt-8 pt-8 border-t border-white/10">
+                  <p className="text-sm text-white/60 mb-4">Follow our research progress</p>
+                  <div className="flex gap-3">
+                    {['LinkedIn', 'GitHub', 'Twitter'].map((social) => (
+                      <a 
+                        key={social}
+                        href="#"
+                        className="px-4 py-2 rounded-lg bg-white/10 text-sm font-medium hover:bg-white/20 transition-colors"
+                      >
+                        {social}
+                      </a>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -711,26 +1628,86 @@ const Home = () => {
       </section>
 
       {/* ========== FOOTER ========== */}
-      <footer className="py-12 bg-slate-900 border-t border-slate-800 text-white">
+      <footer className="py-16 bg-white border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                <img src="/logo.png" alt="Smart Helmet Logo" className="w-8 h-8 object-contain" />
+          <div className="grid md:grid-cols-2 gap-12 items-start">
+            {/* Logo & Description */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <img src="/logo.png" alt="Smart Helmet Logo" className="w-10 h-10 rounded-xl object-contain" />
+                <span className="text-xl font-bold text-[#001A33]">SMARTHELMET</span>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Smart Helmet Research</span>
+              <p className="text-[#001A33]/60 text-sm leading-relaxed max-w-md">
+                A university research project engineering a real-time, AI-driven safety monitoring system for Sri Lanka's public transport network powered by Edge AI, IoT sensors, and cloud analytics.
+              </p>
             </div>
-            <div className="flex flex-wrap justify-center gap-6 text-slate-400">
-              <a href="#home" className="hover:text-blue-400 transition-colors">Home</a>
-              <a href="#about" className="hover:text-blue-400 transition-colors">About</a>
-              <a href="#features" className="hover:text-blue-400 transition-colors">Features</a>
-              <a href="#team" className="hover:text-blue-400 transition-colors">Team</a>
-              <a href="#contact" className="hover:text-blue-400 transition-colors">Contact</a>
+            
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-sm font-bold text-[#001A33] uppercase tracking-wider mb-4">Quick Links</h4>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                <div className="space-y-2">
+                  {['Home', 'Domain', 'Milestones', 'Documents'].map((item) => (
+                    <button 
+                      key={item}
+                      onClick={() => scrollToSection(item.toLowerCase().replace(' ', '-'))}
+                      className="block text-sm text-[#001A33]/60 hover:text-[#F26522] transition-colors"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  {['Slides', 'About Us', 'Contact Us'].map((item) => (
+                    <button 
+                      key={item}
+                      onClick={() => scrollToSection(item.toLowerCase().replace(' ', '-').replace(' ', '-'))}
+                      className="block text-sm text-[#001A33]/60 hover:text-[#F26522] transition-colors"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-            <p className="text-slate-500 text-sm">© 2024 Smart Helmet Research. All rights reserved.</p>
+          </div>
+          
+          {/* Bottom Bar */}
+          <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-[#001A33]/40 text-sm">© 2026 Smart Helmet Research Team. All rights reserved.</p>
+            <p className="text-[#001A33]/40 text-sm">Designed with precision & passion.</p>
           </div>
         </div>
       </footer>
+
+      {/* Image Viewer Modal */}
+      {imageViewer.open && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setImageViewer({ open: false, image: null, title: '' })}
+        >
+          <button 
+            className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setImageViewer({ open: false, image: null, title: '' });
+            }}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <div 
+            className="max-w-5xl max-h-[90vh] w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={imageViewer.image}
+              alt={imageViewer.title}
+              className="w-full h-full object-contain rounded-lg"
+            />
+            <p className="text-white text-center mt-4 text-lg font-medium">{imageViewer.title}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
