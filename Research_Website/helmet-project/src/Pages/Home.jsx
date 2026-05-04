@@ -234,8 +234,8 @@ const Home = () => {
       title: 'Final Presentation',
       description: 'Comprehensive final presentation covering complete Smart Helmet system, results, and safety impact analysis.',
       date: 'June 2026',
-      status: 'In Progress',
-      filename: null,
+      status: 'Available',
+      filename: '25-26J 294 -Final Presentations (1).pptx',
       icon: Presentation,
       color: 'cyan',
       type: '.pptx',
@@ -1144,12 +1144,11 @@ const Home = () => {
                         {presentation.filename ? (
                           <a
                             href={`/presentations/${presentation.filename}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            download
                             className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 transition-colors"
                           >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            View
+                            <Download className="w-3.5 h-3.5" />
+                            Download
                           </a>
                         ) : (
                           <button
