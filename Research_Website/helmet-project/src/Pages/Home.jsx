@@ -151,40 +151,40 @@ const Home = () => {
 
   // Documents Data - Updated
   const documents = [
-    { 
-      title: 'Topic Assessment Form', 
-      desc: 'Initial project assessment and team allocation documentation', 
-      file: 'taf-document.pdf', 
+    {
+      title: 'Topic Assessment Form',
+      desc: 'IT4010-TAF-2025 July Batch[25-26J-294]',
+      file: 'documents/taf-document.pdf',
       type: 'PDF',
       size: '2mb',
       status: 'Available',
       accent: 'lavender'
     },
-    { 
-      title: 'Research Paper', 
-      desc: 'Real-Time Safety Monitoring System for Public Transport: An AI-Driven Approach', 
-      file: 'research-paper.pdf', 
+    {
+      title: 'Research Paper',
+      desc: 'Smart Helmet Conference Paper',
+      file: 'documents/research-paper.pdf',
       type: 'PDF',
       size: '2mb',
       status: 'Available',
       accent: 'mint'
     },
-    { 
-      title: 'Project Charter', 
-      desc: 'Comprehensive project proposal with methodology and timeline', 
-      file: 'project-charter.pdf', 
+    {
+      title: 'Project Proposal',
+      desc: 'Comprehensive project proposal with methodology and timeline',
+      file: 'documents/proposal-report.pdf',
       type: 'PDF',
       size: '3mb',
       status: 'Available',
       accent: 'blue'
     },
-    { 
-      title: 'Technical Documentation', 
-      desc: 'System architecture, API documentation, and technical specifications', 
-      file: 'tech-docs.pdf', 
+    {
+      title: 'Final Thesis',
+      desc: 'Complete research thesis documentation',
+      file: '#',
       type: 'PDF',
-      size: '4mb',
-      status: 'Available',
+      size: '5mb',
+      status: 'Coming Soon',
       accent: 'rose'
     },
   ];
@@ -286,7 +286,7 @@ const Home = () => {
       title: 'RESEARCHER',
       institution: 'Sri Lanka Institute of Information Technology',
       type: 'Undergraduate',
-      linkedin: 'www.linkedin.com/in/yasiru-nuwan-a6193a2b8',
+      linkedin: 'https://www.linkedin.com/in/yasiru-nuwan-a6193a2b8/',
       accent: 'blue',
       image: '/yasiru.jpeg'
     },
@@ -296,7 +296,7 @@ const Home = () => {
       title: 'RESEARCHER',
       institution: 'Sri Lanka Institute of Information Technology',
       type: 'Undergraduate',
-      linkedin: '#',
+      linkedin: 'https://www.linkedin.com/in/sarith-samarakoon-a74739313/',
       accent: 'purple',
       image: '/sarith.jpeg'
     },
@@ -306,7 +306,7 @@ const Home = () => {
       title: 'RESEARCHER',
       institution: 'Sri Lanka Institute of Information Technology',
       type: 'Undergraduate',
-      linkedin: '#',
+      linkedin: 'https://www.linkedin.com/in/pradeep-samarasinghe/',
       accent: 'teal',
       image: '/pradeep.jpeg'
     },
@@ -316,7 +316,7 @@ const Home = () => {
       title: 'RESEARCHER',
       institution: 'Sri Lanka Institute of Information Technology',
       type: 'Undergraduate',
-      linkedin: '#',
+      linkedin: 'https://www.linkedin.com/in/ravindi-wannigama-3b40b9343/',
       accent: 'orange',
       image: '/ravindi.jpeg'
     },
@@ -1000,7 +1000,7 @@ const Home = () => {
               </span>
               <span className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-amber-400" />
-                {documents.filter(d => d.status === 'Pending').length + presentations.filter(p => p.status === 'Pending').length} Coming Soon
+                {documents.filter(d => d.status === 'Coming Soon').length + presentations.filter(p => p.status === 'Coming Soon').length} Coming Soon
               </span>
             </div>
           </div>
@@ -1043,9 +1043,9 @@ const Home = () => {
                       <span className="px-2 py-0.5 bg-slate-100 rounded text-slate-500 font-medium">PDF</span>
                       <span>{doc.size}</span>
                     </div>
-                    {doc.file ? (
-                      <a 
-                        href={`/documents/${doc.file}`}
+                    {doc.file !== '#' ? (
+                      <a
+                        href={`/${doc.file}`}
                         download
                         className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0055FF] hover:text-[#0044CC] transition-colors"
                       >
@@ -1203,13 +1203,7 @@ const Home = () => {
                     </span>
                     <p className="text-sm text-[#001A33]/60 mb-1">{supervisor.institution}</p>
                     <p className="text-xs text-slate-400 mb-4">{supervisor.department}</p>
-                    <a 
-                      href={supervisor.linkedin}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-[#001A33] hover:border-[#0055FF] hover:text-[#0055FF] transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      LinkedIn
-                    </a>
+                    
                   </div>
                 );
               })}
@@ -1510,14 +1504,17 @@ const Home = () => {
                 Have questions about our research? We'd love to hear from you.
               </p>
               
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form 
+                action="https://formspree.io/f/xnjwpgar" 
+                method="POST"
+                className="space-y-6"
+              >
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-[#001A33] mb-2">Name</label>
                     <input 
                       type="text" 
-                      value={formData.name} 
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      name="name"
                       required
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[#001A33] placeholder-slate-400 focus:ring-2 focus:ring-[#0055FF]/20 focus:border-[#0055FF] outline-none transition"
                       placeholder="Your name"
@@ -1527,8 +1524,7 @@ const Home = () => {
                     <label className="block text-sm font-semibold text-[#001A33] mb-2">Email</label>
                     <input 
                       type="email" 
-                      value={formData.email} 
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      name="email"
                       required
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[#001A33] placeholder-slate-400 focus:ring-2 focus:ring-[#0055FF]/20 focus:border-[#0055FF] outline-none transition"
                       placeholder="your@email.com"
@@ -1539,8 +1535,7 @@ const Home = () => {
                   <label className="block text-sm font-semibold text-[#001A33] mb-2">Subject</label>
                   <input 
                     type="text" 
-                    value={formData.subject} 
-                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                    name="subject"
                     required
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[#001A33] placeholder-slate-400 focus:ring-2 focus:ring-[#0055FF]/20 focus:border-[#0055FF] outline-none transition"
                     placeholder="How can we help?"
@@ -1549,8 +1544,7 @@ const Home = () => {
                 <div>
                   <label className="block text-sm font-semibold text-[#001A33] mb-2">Message</label>
                   <textarea 
-                    value={formData.message} 
-                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    name="message"
                     required
                     rows={5}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[#001A33] placeholder-slate-400 focus:ring-2 focus:ring-[#0055FF]/20 focus:border-[#0055FF] outline-none transition resize-none"
@@ -1579,7 +1573,7 @@ const Home = () => {
                     </div>
                     <div>
                       <p className="font-medium mb-1">Email</p>
-                      <p className="text-white/60 text-sm">research@sliit.lk</p>
+                      <p className="text-white/60 text-sm">yasiruln215@gmail.com</p>
                     </div>
                   </div>
                   
@@ -1589,7 +1583,7 @@ const Home = () => {
                     </div>
                     <div>
                       <p className="font-medium mb-1">Phone</p>
-                      <p className="text-white/60 text-sm">+94 11 210 5000</p>
+                      <p className="text-white/60 text-sm">+94 70 387 5215</p>
                     </div>
                   </div>
                   
